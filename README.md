@@ -1,14 +1,12 @@
 # Data pipeline to process and analyse Twitter data in a distributed fashion using Apache Spark and Airflow in AWS environment
 
-This repository shows the development of a scalable data pipeline in [AWS](https://aws.amazon.com/de/) using parallelisation techniques via [Apache Spark](https://spark.apache.org/) on [Amazon EMR](https://aws.amazon.com/de/emr/) and orchestrating workflows via [Apache Airflow](https://airflow.apache.org/). The data analysis part consists of a simple sentiment analysis using a rule-based approach and a topic analysis using word frequencies by applying common NLP techniques.  
+This repository shows the development of a scalable data pipeline in [AWS](https://aws.amazon.com/de/) using parallelisation techniques via [Apache Spark](https://spark.apache.org/) on [Amazon EMR](https://aws.amazon.com/de/emr/) and orchestrating workflows via [Apache Airflow](https://airflow.apache.org/). The data analysis part consists of a simple sentiment analysis using a rule-based approach and a topic analysis using word frequencies by applying common NLP techniques.
 
-The data pipeline is used for an existing [web application](https://subway.christopherkindl.com/) which allows end-user to analyse housing prices based on locations of subway stations. More precisely, users see the average housing price of properties that are within a radius of less than 1km of a particular subway station. Therefore, the new data pipeline shown in this repository is used to make the application richer and, thus, incorporate sentiment scoring and topics analysis to give users a better sense of the common mood and an indication of what type of milieu lives in a particular area.
- 
-The python-based web scraper using `BeautifulSoup` to fetch geo-specific housing prices from property website across London is provided in the [repository](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/tree/main/04_web_scraper) as well but will not be extensively discussed here.
+The data pipeline is used for an existing web application which allows end-user to analyse housing prices based on locations of subway stations. More precisely, users see the average housing price of properties that are within a radius of less than 1km of a particular subway station. Therefore, the new data pipeline shown in this repository is used to make the application richer and, thus, incorporate sentiment scoring and topics analysis to give users a better sense of the common mood and an indication of what type of milieu lives in a particular area.
 
+The python-based web scraper using `BeautifulSoup` to fetch geo-specific housing prices from property website across London is provided in the [repository](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis) as well but will not be extensively discussed here.
 
-![alt text](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/03_images/Architecture.png)
-
+![alt text](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/03_images/Architecture.png)
 
 ## Prerequisites
 
@@ -16,8 +14,8 @@ The python-based web scraper using `BeautifulSoup` to fetch geo-specific housing
 2. [AWS account](https://aws.amazon.com/de/) to run the pipeline in the cloud environment
 3. [Twitter developer account](https://developer.twitter.com/en/apply-for-access) with access to the standard API to fetch tweets
 4. Database - In this project, we use a [PostgreSQL](https://aws.amazon.com/de/rds/postgresql/what-is-postgresql/) database. Database related code snippets (e.g. uploading data to db) might differ when using other databases
-4. Webhosting and domain with [WordPress](https://wordpress.org/support/article/how-to-install-wordpress/) to run the client application
-5. [wpDataTables](https://wpdatatables.com/pricing/) - WordPress plugin to easily access databases and create production-ready tables and charts
+5. Webhosting and domain with [WordPress](https://wordpress.org/support/article/how-to-install-wordpress/) to run the client application
+6. [wpDataTables](https://wpdatatables.com/pricing/) - WordPress plugin to easily access databases and create production-ready tables and charts
 
 &emsp;
 
@@ -52,7 +50,7 @@ MWAA provides variables to store and retrieve arbitrary content or settings as a
 {
     "london-housing-webapp": {
         "bucket_name": "london-housing-webapp",
-        "key1": "input/subway_station_information.csv", 
+        "key1": "input/subway_station_information.csv",
         "output_key": "api_output/twitter_results.parquet",
         "db_name": "postgres",
         "consumer_key": "{{TWITTER API KEY}}",
@@ -64,7 +62,7 @@ MWAA provides variables to store and retrieve arbitrary content or settings as a
 
 ```
 
-A sample [variabes file](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/01_airflow/airflow_variables.json) is provided in the repository that contains all variables used in this project.
+A sample [variabes file](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/01_airflow/airflow_variables.json) is provided in the repository that contains all variables used in this project.
 
 Airflow also allows to define so-called connection objects. In our case, we need a connection to `AWS` itself (Airflow acts as an external system to AWS) and to our `database` in which the final results will be stored.
 
@@ -82,9 +80,9 @@ default_args = {
     'filestore_base': '/tmp/airflowtemp/',
     'email_on_failure': True,
     'email_on_retry': False,
-    'aws_conn_id': 'aws_default_christopherkindl',
+    'aws_conn_id': 'aws_default_vardhanreddy',
     'bucket_name': Variable.get('london-housing-webapp', deserialize_json=True)['bucket_name'],
-    'postgres_conn_id': 'postgres_id_christopherkindl',
+    'postgres_conn_id': 'postgres_id_vardhanreddy',
     'output_key': Variable.get('london-housing-webapp',deserialize_json=True)['output_key'],
     'db_name': Variable.get('london-housing-webapp', deserialize_json=True)['db_name']
 }
@@ -102,7 +100,7 @@ dag = DAG('london-housing-webapp',
 
 ## 2. Taks in the Airflow DAG
 
-**Basic architecture**  
+**Basic architecture**
 
 A typical Airflow DAG consists of different tasks that either fetch, transform or process data in various ways. Heavy data analysis tasks are not recommended to run within the MWAA environment due to its modest workload capacity. ML tasks are called via [Amazon SageMaker](https://aws.amazon.com/de/sagemaker/), whereas complex data analyses can be done in a distributed fashion on [Amazon EMR](https://aws.amazon.com/de/emr/). In our case, we run the data analysis on an Amazon EMR cluster using [Apache Spark](https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark.html) (via Python API PySpark).
 
@@ -174,7 +172,7 @@ The custom function above creates schema and tables directly into the PostgreSQL
 
 &emsp;
 
-**Indicating the order of the tasks** 
+**Indicating the order of the tasks**
 
 Tasks can be executed sequentially or simultaneously. The order can be indicated with the following example syntax:
 
@@ -185,21 +183,22 @@ step_adder >> step_checker >> terminate_emr_cluster >> summarised_data_lineage_s
 save_result_to_postgres_db >> end_data_pipeline
 
 ```
+
 &emsp;
 
-**All tasks of the DAG**  
+**All tasks of the DAG**
 
-![alt text](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/03_images/airflow_steps.jpg)
+![alt text](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/03_images/airflow_steps.jpg)
 
-See the entire Airflow DAG code of this project [here](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/01_airflow/Airflow_DAG.py)
+See the entire Airflow DAG code of this project [here](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/01_airflow/Airflow_DAG.py)
 
 &emsp;
 
 ## 3. Run Spark on Amazon EMR
 
-**Permissions**  
+**Permissions**
 
-Change [IAM policy](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/IAM_policy_configuration.json) to the following setting to allow MWAA to interface with Amazon EMR. 
+Change [IAM policy](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/IAM_policy_configuration.json) to the following setting to allow MWAA to interface with Amazon EMR.
 
 ```JSON
 {
@@ -226,6 +225,7 @@ Change [IAM policy](https://github.com/christopherkindl/twitter-data-pipeline-us
 }
 
 ```
+
 &emsp;
 
 **Motivation to use Spark for data analysis**
@@ -235,14 +235,13 @@ The parallelisation logic of a distributed architecture is the main driver to sp
 
 **Under the hood**
 
-We use Amazon’s big data platform [EMR](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-what-is-emr.html) to run our Spark cluster. A Spark cluster can be characterised by a master node that serves as the central coordinator and worker nodes on which the tasks/jobs are executed (=parallelisation). It requires a distributed storage layer which is [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html) (Hadoop Distributed File System) in our case. S3 object storage is used as our main data storage and HDFS as our intermediate temporary memory on which the script will access the Twitter data and write the results. Temporary means that the processed data to HDFS will disappear after the termination of the cluster. The reason to use HDFS is, that it is substantially faster than writing the results directly to the S3 bucket.  
+We use Amazon’s big data platform [EMR](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-what-is-emr.html) to run our Spark cluster. A Spark cluster can be characterised by a master node that serves as the central coordinator and worker nodes on which the tasks/jobs are executed (=parallelisation). It requires a distributed storage layer which is [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html) (Hadoop Distributed File System) in our case. S3 object storage is used as our main data storage and HDFS as our intermediate temporary memory on which the script will access the Twitter data and write the results. Temporary means that the processed data to HDFS will disappear after the termination of the cluster. The reason to use HDFS is, that it is substantially faster than writing the results directly to the S3 bucket.
 
 **Interaction between Airflow and Amazon EMR**
 
-Every step that will be made on the cluster will be triggered by our Airflow DAG: First, we create the Spark cluster by providing specific configuration details and launch Hadoop for the distributed data storage simultaneously. In terms of the cluster configuration, we use one master node and two worker nodes all running on a m5.xlarge [instance](https://aws.amazon.com/de/ec2/instance-types/) (16 GB RAM, 4 CPU cores) given the relatively small dataset size. Next, we trigger a bootstrap action to install non-standard python libraries ([vaderSentiment](https://pypi.org/project/vaderSentiment/), [NLTK](https://pypi.org/project/nltk/) for NLP pre-processing steps) on which the sentiment and topic analysis scripts depend on. The [file](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/02_emr_spark_jobs/python-libraries.sh) is loaded from an S3 bucket and submitted in the form of a `bash` script.
+Every step that will be made on the cluster will be triggered by our Airflow DAG: First, we create the Spark cluster by providing specific configuration details and launch Hadoop for the distributed data storage simultaneously. In terms of the cluster configuration, we use one master node and two worker nodes all running on a m5.xlarge [instance](https://aws.amazon.com/de/ec2/instance-types/) (16 GB RAM, 4 CPU cores) given the relatively small dataset size. Next, we trigger a bootstrap action to install non-standard python libraries ([vaderSentiment](https://pypi.org/project/vaderSentiment/), [NLTK](https://pypi.org/project/nltk/) for NLP pre-processing steps) on which the sentiment and topic analysis scripts depend on. The [file](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/02_emr_spark_jobs/python-libraries.sh) is loaded from an S3 bucket and submitted in the form of a `bash` script.
 
-Airflow offers pre-defined modules to quickly interact with Amazon EMR. The example below shows how an Amazon EMR cluster with Spark (PySpark) and Hadoop application is created using `EmrCreateJobFlowOperator()`.   
-
+Airflow offers pre-defined modules to quickly interact with Amazon EMR. The example below shows how an Amazon EMR cluster with Spark (PySpark) and Hadoop application is created using `EmrCreateJobFlowOperator()`.
 
 ```Python
 
@@ -256,7 +255,7 @@ JOB_FLOW_OVERRIDES = {
         {'Name': 'install python libraries',
                 'ScriptBootstrapAction': {
                 # path where the .sh file to install non-standard python libaries is loaded from
-                'Path': 's3://{{ BUCKET_NAME}}/scripts/python-libraries.sh'} 
+                'Path': 's3://{{ BUCKET_NAME}}/scripts/python-libraries.sh'}
                             }
                         ],
     "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}], # We want our EMR cluster to have HDFS and Spark
@@ -283,7 +282,7 @@ JOB_FLOW_OVERRIDES = {
                 "InstanceCount": 1, # one master node
             },
             {
-                "Name": "Core - 2", 
+                "Name": "Core - 2",
                 "Market": "SPOT", # Spot instances are a "use as available" instances
                 "InstanceRole": "CORE",
                 "InstanceType": "m5.xlarge",
@@ -302,9 +301,9 @@ JOB_FLOW_OVERRIDES = {
 # qualify it as an Airflow task
 create_emr_cluster = EmrCreateJobFlowOperator(
     task_id="create_emr_cluster",
-    job_flow_overrides=JOB_FLOW_OVERRIDES, # 
-    aws_conn_id="aws_default_christopherkindl",
-    emr_conn_id="emr_default_christopherkindl",
+    job_flow_overrides=JOB_FLOW_OVERRIDES, #
+    aws_conn_id="aws_default_vardhanreddy",
+    emr_conn_id="emr_default_vardhanreddy",
     dag=dag,
 )
 
@@ -316,7 +315,7 @@ create_emr_cluster = EmrCreateJobFlowOperator(
 
 We can submit our Spark job that contains the python file for the sentiment analysis as well as data movement steps. Here, the configuration `s3-dist-cp` allows us to transfer data within S3, or between HDFS and S3. The python file is loaded from the S3 bucket while the scraped Twitter data is moved from the S3 bucket to the HDFS for the sentiment analysis and vice versa once the analysis is done. The same procedure is applied to run the topic analysis. We add a step sensor that will periodically check if the last step is completed, skipped or terminated. After the step sensor identifies the completion of the sentiment analysis (e.g. moving final data from HDFS to S3 bucket), a final step is added to terminate the cluster. The last step is necessary as AWS operates on a pay-per-use model (EMR is usually billed per second) and leaving unneeded resources running is wasteful anyways.
 
-**Hint:** The [pyspark scripts](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/tree/main/02_emr_spark_jobs) to run the analyses are not discussed in detail here. In-code comments should be sufficient to understand the concept of each analysis. We can start a Spark session and fetch the Twitter data as follows. 
+**Hint:** The [pyspark scripts](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/tree/main/02_emr_spark_jobs) to run the analyses are not discussed in detail here. In-code comments should be sufficient to understand the concept of each analysis. We can start a Spark session and fetch the Twitter data as follows.
 
 ```Python
 
@@ -328,7 +327,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, help="HDFS output", default="/output")
     args = parser.parse_args()
     spark = SparkSession.builder.appName("SentimentAnalysis").getOrCreate()
-    
+
     # refers to function defined above which can be found in the complete script
     sentiment_analysis(input_loc=args.input, output_loc=args.output)
 
@@ -340,8 +339,7 @@ To read more about Spark sessions and Spark contexts, check this [post](https://
 
 The figure below summarises the tasks to set up the EMR environment and execute jobs in Spark followed by a code snippet that shows how Spark jobs/steps are defined and called in the Airflow DAG
 
-![alt text](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/03_images/EMR_Spark.jpg)
-
+![alt text](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/03_images/EMR_Spark.jpg)
 
 **Spark-specific jobs:**
 
@@ -372,7 +370,7 @@ SPARK_STEPS = [
                 "--deploy-mode",
                 "client",
                 # refer to the path where the .py script for the data analysis is stored
-                "s3://{{BUCKET_NAME}}/scripts/sentiment_analysis.py", 
+                "s3://{{BUCKET_NAME}}/scripts/sentiment_analysis.py",
             ],
         },
     },
@@ -398,7 +396,7 @@ SPARK_STEPS = [
                 "--deploy-mode",
                 "client",
                 # path where .py file for second analysis is stored
-                "s3://{{BUCKET_NAME}}/scripts/topic_analysis.py", 
+                "s3://{{BUCKET_NAME}}/scripts/topic_analysis.py",
             ],
         },
     },
@@ -420,27 +418,27 @@ SPARK_STEPS = [
 step_adder = EmrAddStepsOperator(
     task_id="add_steps",
     job_flow_id="{{ task_instance.xcom_pull(task_ids='create_emr_cluster', key='return_value') }}",
-    aws_conn_id="aws_default_christopherkindl",
+    aws_conn_id="aws_default_vardhanreddy",
     steps=SPARK_STEPS,
     dag=dag,
 )
 ```
 
-
 **Key Airflow modules to interface with Amazon EMR:**
+
 - `EmrCreateJobFlowOperator()`: to create EMR cluster with desired applications on it
-- `EmrAddStepsOperator()`: to define jobs 
+- `EmrAddStepsOperator()`: to define jobs
 - `EmrStepSensor()`: to watch steps
 - `EmrTerminateJobFlowOperator()`: to terminate EMR cluster
 
 &emsp;
 
-
 ## 4. Launch Airflow DAG
 
-Upload the final Airflow DAG to the corresponding path as explained in the MWAA environment setup guide. Go to the Airflow user interface and start the DAG by switching the button to `On` (**Hint:** use a date in the past to trigger the DAG immediately). 
+Upload the final Airflow DAG to the corresponding path as explained in the MWAA environment setup guide. Go to the Airflow user interface and start the DAG by switching the button to `On` (**Hint:** use a date in the past to trigger the DAG immediately).
 
 Useful housekeeping things to know:
+
 - Log files can be accessed by clicking on the coloured status squares which appear in the [Tree view](https://airflow.apache.org/docs/apache-airflow/stable/ui.html) mode
 - When spark steps are running, you can watch it in Amazon EMR (**AWS management console** > **EMR** > **Clusters**) directly and see how the steps are executed
 - Log files of Spark jobs are not shown in the Airflow generated log files, they have to be enabled when configuring the EMR cluster by providing a S3 path (see the example in readme section **Interaction between Airflow and Amazon EMR**)
@@ -451,21 +449,19 @@ A more detailed description can be found here.
 
 ## 5. Connect database to the web application
 
-For simplification, this documentation does not cover the detailed development process of the website itself. Using the WordPress plugin [wpDataTables](https://wpdatatables.com/pricing/) allows us to easily access any common database (MySQL, PostgreSQL, etc). NoSQL databases are not supported. 
+For simplification, this documentation does not cover the detailed development process of the website itself. Using the WordPress plugin [wpDataTables](https://wpdatatables.com/pricing/) allows us to easily access any common database (MySQL, PostgreSQL, etc). NoSQL databases are not supported.
 
 Once installed, you can connect to a database (**WordPress Website Admin Panel** > **wpDataTables** > **Settings** > **separate DB connection**) and run a query (**WordPress Website Admin Panel** > **wpDataTables** > **Create a Table/Chart**) that is automatically transformed into a table or chat:
 
-![alt image](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/03_images/wp_plugin.jpg)  
+![alt image](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/03_images/wp_plugin.jpg)  
 &emsp;
 
-**Using views to avoid complex queries at client-side**  
+**Using views to avoid complex queries at client-side**
 
-To anticipate a better website performance, we avoid writing a complex query at the client-side and, thus, create a view within the schema that already has both data sources (housing prices, sentiment data) combined. The topic analysis data has its own query due to its generalised form and is accessed directly since it does not require any transformation steps at the client-side. 
+To anticipate a better website performance, we avoid writing a complex query at the client-side and, thus, create a view within the schema that already has both data sources (housing prices, sentiment data) combined. The topic analysis data has its own query due to its generalised form and is accessed directly since it does not require any transformation steps at the client-side.
 
-**Hint:** Views can be easily created using a database administration tool, such as [pgAdmin](https://www.pgadmin.org/)  
+**Hint:** Views can be easily created using a database administration tool, such as [pgAdmin](https://www.pgadmin.org/)
 
 The figure below summarises the interaction between the client-side and the database.
 
-![alt image](https://github.com/christopherkindl/twitter-data-pipeline-using-airflow-and-apache-spark/blob/main/03_images/web_application.jpg)
-
-
+![alt image](https://github.com/VardhanReddy2/Subway-Proximity-Housing-Price-Analysis/blob/main/03_images/web_application.jpg)
